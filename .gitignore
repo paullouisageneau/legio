@@ -1,0 +1,7 @@
+*.o
+*.d
+*.a
+*.so
+build/
+compile_commands.json
+
