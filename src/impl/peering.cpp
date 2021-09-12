@@ -23,9 +23,10 @@ namespace legio::impl {
 
 const string DataChannelName = "legio";
 
-Peering::Peering(shared_ptr<Routing> routing, shared_ptr<Transport> transport, Identifier remoteId)
-    : mRouting(std::move(routing)), mTransport(std::move(transport)),
-      mRemoteId(std::move(remoteId)) {
+Peering::Peering(shared_ptr<Routing> routing, shared_ptr<const Provisioning> provisioning,
+                 shared_ptr<Transport> transport, Identifier remoteId)
+    : mRouting(std::move(routing)), mProvisioning(std::move(provisioning)),
+      mTransport(std::move(transport)), mRemoteId(std::move(remoteId)) {
 	createPeerConnection();
 }
 
@@ -70,8 +71,12 @@ void Peering::createPeerConnection() {
 	disconnect();
 
 	rtc::Configuration config;
-	// TODO: Make ICE servers configurable
+	// TODO: Make STUN server parametrable
 	config.iceServers.emplace_back("stun:stun.ageneau.net:3478");
+
+	for(const auto &entry : mProvisioning->pick(2))
+		config.iceServers.emplace_back(entry.url());
+
 	mPeerConnection = std::make_shared<rtc::PeerConnection>(config);
 
 	using GatheringState = rtc::PeerConnection::GatheringState;

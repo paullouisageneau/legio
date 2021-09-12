@@ -21,6 +21,7 @@
 
 #include "common.hpp"
 #include "identifier.hpp"
+#include "provisioning.hpp"
 #include "routing.hpp"
 #include "transport.hpp"
 
@@ -30,7 +31,8 @@ namespace legio::impl {
 
 class Peering final {
 public:
-	Peering(shared_ptr<Routing> routing, shared_ptr<Transport> transport, Identifier remoteId);
+	Peering(shared_ptr<Routing> routing, shared_ptr<const Provisioning> provisioning,
+	        shared_ptr<Transport> transport, Identifier remoteId);
 	~Peering();
 
 	const Identifier &remoteId() const;
@@ -47,6 +49,7 @@ private:
 	void setDataChannel(shared_ptr<rtc::DataChannel> dataChannel);
 
 	const shared_ptr<Routing> mRouting;
+	const shared_ptr<const Provisioning> mProvisioning;
 	const shared_ptr<Transport> mTransport;
 	const Identifier mRemoteId;
 

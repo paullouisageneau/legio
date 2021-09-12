@@ -43,6 +43,14 @@ struct State final {
 
 	binary ecdhPublic;
 	std::set<Identifier> neighbors;
+
+	enum ProvisionFlags {
+		None = 0x0,
+		HasWebSocket = 0x1,
+		HasTurn = 0x2,
+	};
+
+	uint32_t provision = None;
 };
 
 } // namespace legio::impl

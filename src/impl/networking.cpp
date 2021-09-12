@@ -105,7 +105,7 @@ shared_ptr<Peering> Networking::createPeering(Identifier remoteId) {
 
 	std::cout << "Creating peering for " << to_base64url(remoteId) << std::endl;
 
-	auto peering = std::make_shared<Peering>(node()->routing, mTransport, remoteId);
+	auto peering = std::make_shared<Peering>(node()->routing, node()->provisioning, mTransport, remoteId);
 	mPeerings.emplace(std::move(remoteId), peering);
 	return peering;
 }

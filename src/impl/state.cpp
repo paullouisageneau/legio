@@ -31,6 +31,7 @@ State::~State() {}
 message_ptr State::toMessage(const EcdsaPair &ecdsaPair) const {
 	binary_writer writer;
 
+	writer.writeInt(provision);
 	writer.write(ecdhPublic);
 
 	for (const Identifier &id : neighbors)
@@ -45,12 +46,15 @@ State State::FromMessage(message_ptr message) {
 
 	binary_reader reader(message->body);
 
-	if (reader.size() < Ecdh::KeySize)
+	if (reader.size() < 4 + Ecdh::KeySize)
 		throw std::invalid_argument("Truncated State message");
 
+	uint32_t provision = 0;
+	reader.readInt(provision);
 	binary ecdhPublic = reader.read(Ecdh::KeySize);
 
 	State result(*message->source, message->sequence, std::move(ecdhPublic));
+	result.provision = provision;
 
 	while (reader.size() >= Identifier::Size) {
 		binary id = reader.read(Identifier::Size);

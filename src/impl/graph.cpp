@@ -87,7 +87,7 @@ const State Graph::get(Identifier nodeId) const {
 	std::unique_lock lock(mMutex);
 	auto it = mVertices.find(nodeId);
 	if (it == mVertices.end())
-		throw std::runtime_error("Attempted to get state for unknown node");
+		throw std::runtime_error("Unknown node");
 
 	if (!it->second->state)
 		throw std::runtime_error("Unknown node state");
@@ -95,12 +95,21 @@ const State Graph::get(Identifier nodeId) const {
 	return *it->second->state;
 }
 
-std::vector<Identifier> Graph::nodes() const {
+const State Graph::local() const {
 	std::unique_lock lock(mMutex);
+	auto it = mVertices.find(node()->id());
+	if (it == mVertices.end() || !it->second->state)
+		throw std::logic_error("Missing local node state");
+
+	return *it->second->state;
+}
+
+std::vector<Identifier> Graph::nodes(State::ProvisionFlags filter) const {
+	std::shared_lock lock(mMutex);
 	std::vector<Identifier> result;
 	result.reserve(mVertices.size());
 	for (const auto &[id, vertice] : mVertices)
-		if (vertice->state) // filter vertices with state
+		if (vertice->state && (vertice->state->provision & filter) == filter)
 			result.push_back(id);
 
 	return result;
@@ -114,6 +123,26 @@ int Graph::count() const {
 shared_ptr<RoutingTable> Graph::routingTable() const {
 	std::shared_lock lock(mMutex);
 	return mRoutingTable;
+}
+
+void Graph::addLocalProvision(State::ProvisionFlags flags) {
+	std::unique_lock lock(mMutex);
+	auto it = mVertices.find(node()->id());
+	if (it == mVertices.end() || !it->second->state)
+		throw std::logic_error("Missing local node state");
+
+	it->second->state->provision |= flags;
+	broadcastState();
+}
+
+void Graph::removeLocalProvision(State::ProvisionFlags flags) {
+	std::unique_lock lock(mMutex);
+	auto it = mVertices.find(node()->id());
+	if (it == mVertices.end() || !it->second->state)
+		throw std::logic_error("Missing local node state in network state");
+
+	it->second->state->provision &= ~flags;
+	broadcastState();
 }
 
 void Graph::broadcastHello() {

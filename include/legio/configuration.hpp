@@ -24,6 +24,7 @@
 namespace legio {
 
 struct Configuration {
+	optional<string> host;
 	optional<uint16_t> port = 8888;
 };
 

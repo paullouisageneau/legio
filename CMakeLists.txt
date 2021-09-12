@@ -32,8 +32,10 @@ if(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
     target_link_libraries(legio datachannel-wasm)
 else()
     option(NO_MEDIA "Disable media support in libdatachannel" ON)
+    option(NO_EXPORT_HEADER "Disable export header for libjuice" ON) # causes build issues
     add_subdirectory(deps/libdatachannel EXCLUDE_FROM_ALL)
     target_link_libraries(legio LibDataChannel::LibDataChannel)
+    target_link_libraries(legio LibJuice::LibJuice) # dependency of libdatachannel
 endif()
 
 file(GLOB_RECURSE LEGIO_PEER_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/peer/*.cpp)

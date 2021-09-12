@@ -43,10 +43,16 @@ public:
 
 	bool insert(State state);
 	const State get(Identifier nodeId) const;
+	const State local() const;
 	std::vector<Identifier> nodes() const;
+
+	std::vector<Identifier> nodes(State::ProvisionFlags filter = State::None) const;
 	int count() const;
 
 	shared_ptr<RoutingTable> routingTable() const;
+
+	void addLocalProvision(State::ProvisionFlags flags);
+	void removeLocalProvision(State::ProvisionFlags flags);
 
 private:
 	void broadcastHello();

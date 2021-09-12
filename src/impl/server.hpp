@@ -24,7 +24,9 @@
 #include "common.hpp"
 #include "component.hpp"
 #include "configuration.hpp"
+#include "transport.hpp"
 
+#include <juice/juice.h>
 #include <rtc/websocketserver.hpp>
 
 #include <chrono>
@@ -40,7 +42,30 @@ public:
 	void notify(const events::variant &event);
 
 private:
+	struct TurnCredentials {
+		using clock = std::chrono::system_clock;
+		using time_point = std::chrono::time_point<clock>;
+
+		static TurnCredentials Generate();
+
+		string username;
+		string password;
+		time_point creation;
+		time_point expiration;
+
+		clock::duration age() const {
+			return std::max(clock::now() - creation, clock::duration::zero());
+		}
+	};
+
+	TurnCredentials generateTurnCredentials();
+	void setupTurnCredentials(const TurnCredentials &credentials);
+	void provision(Identifier remoteId, binary payload);
+
 	shared_ptr<rtc::WebSocketServer> mWebSocketServer;
+	juice_server_t *mTurnServer;
+	optional<TurnCredentials> mCachedTurnCredentials;
+	unique_ptr<Transport> mTransport;
 };
 
 } // namespace legio::impl

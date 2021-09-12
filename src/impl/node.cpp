@@ -47,10 +47,10 @@ Node::Node(Configuration _config)
 #ifndef __EMSCRIPTEN__
       server(config.port ? std::make_shared<Server>(config, this) : nullptr),
 #endif
+      provisioning(std::make_shared<Provisioning>(this)),
       networking(std::make_shared<Networking>(this)),
       userTransport(std::make_unique<BroadcastableTransport>(
           this, Message::User, std::bind(&Node::receive, this, _1, _2))) {
-
 #ifndef __EMSCRIPTEN__
 	rtc::InitLogger(rtc::LogLevel::Warning);
 #endif

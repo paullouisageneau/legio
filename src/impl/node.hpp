@@ -26,6 +26,7 @@
 #include "graph.hpp"
 #include "identifier.hpp"
 #include "networking.hpp"
+#include "provisioning.hpp"
 #include "routing.hpp"
 #include "scheduler.hpp"
 #include "transport.hpp"
@@ -67,6 +68,7 @@ public:
 #ifndef __EMSCRIPTEN__
 	const shared_ptr<Server> server;
 #endif
+	const shared_ptr<Provisioning> provisioning;
 	const shared_ptr<Networking> networking;
 	const shared_ptr<Transport> userTransport;
 
