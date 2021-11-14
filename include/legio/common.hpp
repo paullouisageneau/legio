@@ -39,10 +39,10 @@
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <variant>
-#include <stdexcept>
 
 namespace legio {
 
@@ -56,6 +56,10 @@ using std::unique_ptr;
 using std::variant;
 using std::weak_ptr;
 
+using std::int16_t;
+using std::int32_t;
+using std::int64_t;
+using std::int8_t;
 using std::ptrdiff_t;
 using std::size_t;
 using std::uint16_t;
