@@ -7,3 +7,6 @@
 [submodule "deps/cryptopp"]
 	path = deps/cryptopp
 	url = https://github.com/paullouisageneau/cryptopp.git
+[submodule "deps/libplum"]
+	path = deps/libplum
+	url = https://github.com/paullouisageneau/libplum.git

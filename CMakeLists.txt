@@ -34,6 +34,8 @@ else()
     option(NO_MEDIA "Disable media support in libdatachannel" ON)
     add_subdirectory(deps/libdatachannel EXCLUDE_FROM_ALL)
     target_link_libraries(legio LibDataChannel::LibDataChannel)
+	add_subdirectory(deps/libplum EXCLUDE_FROM_ALL)
+	target_link_libraries(legio LibPlum::LibPlum)
 endif()
 
 file(GLOB_RECURSE LEGIO_PEER_SOURCES ${CMAKE_CURRENT_SOURCE_DIR}/peer/*.cpp)
