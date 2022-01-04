@@ -23,8 +23,16 @@
 
 namespace legio {
 
+const uint16_t DefaultPort = 8080;
+const string DefaultDummyTlsService = "legio-p2p.net";
+
 struct Configuration {
-	optional<uint16_t> port = 8888;
+	optional<uint16_t> port = DefaultPort;
+	optional<string> externalHost;
+	optional<uint16_t> externalPort;
+	optional<string> tlsPemCertificate;
+	optional<string> tlsPemKey;
+	optional<string> dummyTlsService = DefaultDummyTlsService;
 };
 
 } // namespace legio

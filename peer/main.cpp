@@ -45,7 +45,7 @@ int main(int argc, char *argv[]) {
 		std::cout << "Starting..." << std::endl;
 
 		legio::Configuration config;
-		config.port = argc <= 1 ? 8888 : 0;
+		config.port = argc <= 1 ? 8080 : 0;
 		node = std::make_unique<legio::Node>(std::move(config));
 
 		std::cout << "Local node is " << legio::to_base64url(node->id()) << std::endl;

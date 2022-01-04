@@ -25,6 +25,7 @@
 #include "component.hpp"
 #include "configuration.hpp"
 
+#include <plum/plum.h>
 #include <rtc/websocketserver.hpp>
 
 #include <chrono>
@@ -40,7 +41,23 @@ public:
 	void notify(const events::variant &event);
 
 private:
-	shared_ptr<rtc::WebSocketServer> mWebSocketServer;
+	struct CertificatePair {
+		string certificate;
+		string key;
+	};
+
+	void createWebSocketServer(uint16_t port, optional<string> externalHost = nullopt,
+	                           optional<uint16_t> externalPort = nullopt,
+	                           optional<CertificatePair> certPair = nullopt);
+
+	int mMappingId;
+
+	unique_ptr<rtc::WebSocketServer> mWebSocketServer;
+	string mUrl;
+
+	static void PlumLogCallback(plum_log_level_t level, const char *message);
+	static void PlumMappingCallback(int id, plum_state_t state, const plum_mapping_t *mapping);
+	static optional<CertificatePair> GetPlumCertificatePair();
 };
 
 } // namespace legio::impl
