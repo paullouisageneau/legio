@@ -29,6 +29,7 @@
 #include <rtc/websocketserver.hpp>
 
 #include <chrono>
+#include <mutex>
 
 namespace legio::impl {
 
@@ -36,6 +37,8 @@ class Server final : public Component {
 public:
 	Server(const Configuration &config, Node *node);
 	~Server();
+
+	string url() const;
 
 	void update();
 	void notify(const events::variant &event);
@@ -46,18 +49,21 @@ private:
 		string key;
 	};
 
-	void createWebSocketServer(uint16_t port, optional<string> externalHost = nullopt,
-	                           optional<uint16_t> externalPort = nullopt,
-	                           optional<CertificatePair> certPair = nullopt);
+	void createWebSocketServer(uint16_t port, optional<CertificatePair> certPair = nullopt);
+	void updateExternal(optional<string> externalHost, optional<uint16_t> externalPort);
+	string generateUrl() const;
 
 	int mMappingId;
-
 	unique_ptr<rtc::WebSocketServer> mWebSocketServer;
-	string mUrl;
+	bool mTlsEnabled;
+	optional<string> mExternalHost;
+	optional<uint16_t> mExternalPort;
+	mutable std::mutex mMutex;
 
 	static void PlumLogCallback(plum_log_level_t level, const char *message);
 	static void PlumMappingCallback(int id, plum_state_t state, const plum_mapping_t *mapping);
 	static optional<CertificatePair> GetPlumCertificatePair();
+	static string GetLocalAddress();
 };
 
 } // namespace legio::impl

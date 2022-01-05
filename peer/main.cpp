@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
 		config.port = argc <= 1 ? 8080 : 0;
 		node = std::make_unique<legio::Node>(std::move(config));
 
-		std::cout << "Local node is " << legio::to_base64url(node->id()) << std::endl;
+		std::cout << "Local node: " << legio::to_base64url(node->id()) << std::endl;
 
 		if(argc > 1) {
 			std::string url = argv[1];

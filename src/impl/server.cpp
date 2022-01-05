@@ -41,8 +41,8 @@ Server::Server(const Configuration &config, Node *node) : Component(node), mMapp
 			throw std::runtime_error("Initialization failed");
 
 		if (config.externalHost) {
-			string externalHost = *config.externalHost;
-			auto externalPort = config.externalPort.value_or(port);
+			std::string externalHost = config.externalHost.value();
+			uint16_t externalPort = config.externalPort.value_or(port);
 
 			optional<CertificatePair> certPair;
 			if (config.tlsPemCertificate && config.tlsPemKey) {
@@ -55,7 +55,8 @@ Server::Server(const Configuration &config, Node *node) : Component(node), mMapp
 				certPair = GetPlumCertificatePair();
 			}
 
-			createWebSocketServer(port, externalHost, externalPort, std::move(certPair));
+			createWebSocketServer(port, std::move(certPair));
+			updateExternal(externalHost, externalPort);
 
 		} else {
 			createWebSocketServer(port);
@@ -82,14 +83,19 @@ Server::~Server() {
 	plum_cleanup();
 }
 
+string Server::url() const {
+	std::lock_guard lock(mMutex);
+	return generateUrl();
+}
+
 void Server::update() {}
 
 void Server::notify(const events::variant &event) {}
 
-void Server::createWebSocketServer(uint16_t port, optional<string> externalHost,
-                                   optional<uint16_t> externalPort,
-                                   optional<CertificatePair> certPair) {
+void Server::createWebSocketServer(uint16_t port, optional<CertificatePair> certPair) {
 	try {
+		std::lock_guard lock(mMutex);
+
 		mWebSocketServer.reset();
 
 		rtc::WebSocketServer::Configuration webSocketServerConfig;
@@ -100,6 +106,7 @@ void Server::createWebSocketServer(uint16_t port, optional<string> externalHost,
 			webSocketServerConfig.keyPemFile = certPair->key;
 		}
 
+		mTlsEnabled = webSocketServerConfig.enableTls;
 		mWebSocketServer = std::make_unique<rtc::WebSocketServer>(std::move(webSocketServerConfig));
 
 		mWebSocketServer->onClient([this](shared_ptr<rtc::WebSocket> webSocket) {
@@ -111,25 +118,32 @@ void Server::createWebSocketServer(uint16_t port, optional<string> externalHost,
 			});
 		});
 
-		// TODO: sync for mUrl
-		if (externalHost) {
-			string hostname =
-			    externalHost->find(':') != string::npos ? "[" + *externalHost + "]" : *externalHost;
-			uint16_t port = externalPort.value_or(port);
-
-			std::ostringstream url;
-			url << (certPair ? "wss" : "ws") << "://" << hostname << ":" << port << "/";
-			mUrl = url.str();
-
-			std::cout << "WebSocket URL is: " << mUrl << std::endl;
-
-		} else {
-			mUrl.clear();
-		}
-
 	} catch (const std::exception &e) {
 		throw std::runtime_error(string("WebSocket server creation failed: ") + e.what());
 	}
+}
+
+void Server::updateExternal(optional<string> externalHost, optional<uint16_t> externalPort) {
+	std::lock_guard lock(mMutex);
+	mExternalHost = std::move(externalHost);
+	mExternalPort = std::move(externalPort);
+
+	std::cout << "WebSocket server URL: " << generateUrl() << std::endl;
+}
+
+string Server::generateUrl() const {
+	if (!mWebSocketServer)
+		throw std::runtime_error("WebSocket server is not started");
+
+	uint16_t port = mExternalPort.value_or(mWebSocketServer->port());
+
+	string hostname = mExternalHost.value_or(GetLocalAddress());
+	if (hostname.find(':') != string::npos) // IPv6
+		hostname = "[" + hostname + "]";
+
+	std::ostringstream url;
+	url << (mTlsEnabled ? "wss" : "ws") << "://" << hostname << ":" << port << "/";
+	return url.str();
 }
 
 void Server::PlumLogCallback(plum_log_level_t level, const char *message) {
@@ -165,10 +179,11 @@ void Server::PlumMappingCallback(int id, plum_state_t state, const plum_mapping_
 
 	if (state == PLUM_STATE_SUCCESS) {
 		auto certPair = GetPlumCertificatePair();
-		server->createWebSocketServer(mapping->internal_port, mapping->external_host,
-		                              mapping->external_port, std::move(certPair));
-	} else {
-		// TODO
+		server->createWebSocketServer(mapping->internal_port, std::move(certPair));
+		server->updateExternal(mapping->external_host, mapping->external_port);
+
+	} else if (state == PLUM_STATE_FAILURE) {
+		server->updateExternal(nullopt, nullopt);
 	}
 }
 
@@ -198,6 +213,14 @@ optional<Server::CertificatePair> Server::GetPlumCertificatePair() {
 	}
 
 	return result;
+}
+
+string Server::GetLocalAddress() {
+	char local[PLUM_MAX_ADDRESS_LEN];
+	if (plum_get_local_address(local, PLUM_MAX_ADDRESS_LEN) < 0)
+		return "127.0.0.1";
+
+	return local;
 }
 
 } // namespace legio::impl
