@@ -54,6 +54,7 @@ public:
 	void notify(const events::variant &event);
 	void update();
 
+	string url() const;
 	bool isConnected() const;
 	void connect(string url);
 

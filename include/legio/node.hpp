@@ -40,7 +40,7 @@ public:
 
 	// Identifier of the local node
 	binary id() const;
-
+	string url() const;
 	bool isConnected() const;
 
 	void update();

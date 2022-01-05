@@ -78,6 +78,14 @@ void Node::update() {
 	scheduler->run();
 }
 
+string Node::url() const {
+#ifndef __EMSCRIPTEN__
+	return server->url();
+#else
+	return "";
+#endif
+}
+
 bool Node::isConnected() const { return (routing->table()->count() > 0); }
 
 void Node::connect(string url) {

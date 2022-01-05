@@ -31,6 +31,8 @@ Node::~Node() {}
 
 binary Node::id() const { return impl()->id(); }
 
+string Node::url() const { return impl()->url(); }
+
 bool Node::isConnected() const { return impl()->isConnected(); }
 
 void Node::update() { impl()->update(); }
